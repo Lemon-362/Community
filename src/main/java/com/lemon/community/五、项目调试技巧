@@ -1,0 +1,27 @@
+TODO 五、项目调试技巧
+
+一、HTTP响应状态返回码
+1. 200：OK，请求成功
+2. 302：Found，让浏览器自主发送请求，实现页面跳转 —— 3xx都表示重定向
+3. 404：Not Found，请求失败，请求所希望得到的资源没有在服务器上发现
+4. 500：服务器遇到了不知道如何处理的情况
+
+二、服务端和客户端的Debug
+客户端：
+1. F10：逐行
+2. F11：进入内部
+3. F8：执行到底，或者下一个断点处
+
+服务端：
+1. F8：逐行
+2. F7：进入内部
+3. F9：执行到底，或者下一个断点处
+
+三、日志级别
+1. 级别：trace -> debug -> info -> warn -> error
+2. 设置日志级别后，只会打印当前级别及其之后的日志
+    logging.level.com.lemon.community=debug
+3. 测试：LoggerTests
+4. 打印logger日志保存到本地
+    logging.file.path=D:/MyProjects/Nowcoder/community.log
+5. 添加logback-spring.xml文件，设置保存方式，大小，分类存储

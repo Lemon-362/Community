@@ -1,0 +1,95 @@
+TODO 四、开发社区首页（分页查询帖子discuss_post）
+    分步实现：
+    (1) 开发社区首页，显示前10个帖子
+    (2) 开发分页组件，分页显示所有的帖子
+
+开发顺序：
+    DAO -> Service -> Controller
+
+1.DAO：
+(1) 实体类DiscussPost
+(2) Mapper接口
+(3) Mapper映射文件
+(4) 测试：防止SQL语句出错
+
+2.Service:
+(1) DiscussPostService
+    DiscussPost中有一个外键userId，不能直接显示userId，需要通过userId来查询到username，显示username
+      方法一：SQL语句加上关联查询用户
+      方法二：针对每一个DiscussPost查询user，将user和DiscussPost组合在一起显示（推荐）
+(2) UserService
+
+3. Controller:
+(1) 准备好静态资源和模板资源
+(2) HomeController
+(3) 处理index.html的帖子列表
+    如果是绝对路径，就不需要改
+    如果是相对路径，需要将相对路径改成动态的（9行，408行）
+        th:href="@{/css/global.css}"：让thymeleaf去classpath:/static下找资源
+        <script th:src="@{/js/global.js}"></script>
+        <script th:src="@{/js/index.js}"></script>
+    只需要保留一个帖子列表的li标签，其余遍历输出
+****************************************************
+1.th:each="map:${discussPosts}"(125行)
+(1) th:each：遍历，循环输出
+(2) ${discussPosts}：表达式
+(3) map:：每次遍历得到的变量
+
+2.th:src="${map.user.headerUrl}"(128行)
+(1) ${map.user.headerUrl}：map中存储的user的headerUrl头像链接
+(2) map.user.headerUrl：调用的是map.get("user") --> User --> user.getHeaderUrl()
+
+3.th:if="${map.post.type==1}：判断是否是置顶帖(136行)
+
+4.th:if="${map.post.status==1}"：判断是否是精华(138行)
+
+5.th:utext="${map.user.username}"：获得username(143行)
+
+6.th:text="${#dates.format(map.post.createTime, 'yyyy-MM-dd HH:mm:ss')}"(143行)
+(1) #dates.format：#表示使用thymeleaf内置工具类，使用日期格式化
+(2) 传入两个参数：遍历得到的创建时间，格式化模板
+****************************************************
+
+4. 封装分页相关的信息Page，便于复用
+(1) current：当前页码
+(2) limit：每页显示上限
+(3) rows：数据的总数服务端查询数据表，用于计算总的页数）
+(4) path：查询路径（用于分页的超链接）
+(5) get和set方法：加上一些基本判断
+(6) getOffset：计算获得当前页的起始行
+(7) getTotal：获取总页数
+(8) getFrom：获取起始页码，获取最近的2页
+(9) getTo：获取结束页码，获取最近的2页
+
+5. 在Controller中增加分页功能
+(1) 服务端：设置总行数
+(2) 服务端：设置当前访问路径
+(3) 设置动态的offset和limit
+(4) 不需要将Page放到Model中：
+    因为方法调用之前，SpringMVC会自动实例化Model和Page，并将Page注入Model，所以在thymeleaf中可以直接访问Page对象中的数据
+
+6. 在index中设置分页(156行)
+(1) th:if="${page.rows>0}"：如果没有数据，则该区域不显示
+(2) th:href="@{${page.path}(current=1)}"：首页
+    @{}：路径
+    ${page.path}：获得page的路径(/index)
+    (current=1,limit=5)：()会转换成?
+最终效果：/index?current=1&limit=5
+(3) th:href="@{${page.path}(current=${page.total})}"：末页
+    current=${page.total}：从page中获得总的页数
+(4) th:href="@{${page.path}(current=${page.current-1})}"：上一页
+    current=${page.current-1}：从page中获得当前页 - 1
+(5) 1 当前页
+th:each="i:${#numbers.sequence(page.from, page.to)}"
+th:href="@{${page.path}(current=${i})}"
+th:text="${i}"
+    #numbers.sequence(page.from, page.to)：工具类numbers.sequence，生成从from到to的数组
+    th:text="${i}"：显示当前遍历到的i
+(6) th:class="|page-item ${page.current==1?'disabled':''}|"：在第一页时上一页不能点
+    | |：表示静态值+动态的变量
+    ${page.current==1?'disabled':''：判断如果当前页是1，就加上disabled
+    disabled：加上后就不可点击
+(7) th:class="|page-item ${page.current==page.total?'disabled':''}|"：在最后一页时下一页不能点
+(8) th:class="|page-item ${i==page.current?'active':''}|"：在当前页时高亮
+    ${i==page.current?'active':''}：判断遍历的i如果时当前页，就加上active
+    active：加上后就高亮

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- TODO 4.1.3 Mapper映射文件  -->
+<mapper namespace="com.lemon.community.mapper.DiscussPostMapper">
+
+    <sql id="selectFields">
+        id, user_id, title, content, type, status, create_time, comment_count, score
+    </sql>
+
+    <!--  List<DiscussPost> selectDiscussPosts(int userId, int offset, int limit);
+        (1) status != 2：没有被拉黑的用户
+        (2) <if test="userId!=0">：if标签。userId在首页时是默认为0，不传入参数，而当userId不为0时，需要传入参数，拼接到SQL中
+        (3) order by type desc, create_time desc：先按照帖子类型降序，置顶帖的type为2，所以排在前面；类型相同的按照创建时间排序
+        (4) limit #{offset}, #{limit}：分页的限制
+    -->
+    <select id="selectDiscussPosts" resultType="com.lemon.community.entity.DiscussPost">
+        select <include refid="selectFields"/>
+        from discuss_post
+        where status != 2
+        <if test="userId!=0">
+            and user_id = #{userId}
+        </if>
+        order by type desc, create_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <!-- int selectDiscussPostRows(@Param("userId") int userId);
+        (1) count(id)：查询数量
+    -->
+    <select id="selectDiscussPostRows" resultType="int">
+        select count(id)
+        from discuss_post
+        where status != 2
+        <if test="userId!=0">
+            and user_id = #{userId}
+        </if>
+    </select>
+
+</mapper>
